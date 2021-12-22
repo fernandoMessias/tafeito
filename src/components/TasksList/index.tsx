@@ -18,11 +18,18 @@ import { useAxios } from '../../hooks/useAxios';
 import TagsInput from '../TagsInput';
 import TaskAttachFile from '../TaskAttachFile';
 import AttachFile from '../AttachFile';
+import {useLocalStorage} from '../../hooks/useLocalStorage';
+
+import axios from 'axios';
 
 type TasksListProps = {
   tasks: Task[];
   category: Category;
   updateTasks: () => void;
+}
+
+export type TokenProps = {
+  token: string|null
 }
 
 type ResponseDeleteTask = {
@@ -41,6 +48,7 @@ export default function TasksList(props:TasksListProps) {
   } = props;
 
   const [checked, setChecked] = React.useState([0]);
+  const [, setTokenObj] = useLocalStorage<TokenProps>("token", {token:null});
 
   const {
     commit: commitTask,
@@ -80,7 +88,21 @@ export default function TasksList(props:TasksListProps) {
 
 
   const handleDeleteButton = (taskId:number) => {
-    commitTask({}, updateTasks, `tarefas/${taskId}`);
+    const item = window.localStorage.getItem('token');
+    const tokenObj: TokenProps = JSON.parse(item!);
+
+    var config = {
+      headers: {"Authorization" : `Bearer ${tokenObj!.token}`}
+  };
+
+    axios.delete(`http://localhost:8080/tarefas/${taskId}`, config)
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+
   }
 
   const updateTaskStatus = (taskId:number, status:boolean) => {
